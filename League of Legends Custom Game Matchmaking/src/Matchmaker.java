@@ -19,7 +19,7 @@ public class Matchmaker {
 
 			List<Matchup> combinations = new ArrayList<Matchup>();
 
-			findAllMatchupsNoAutofill(players, combinations);
+			findAllMatchupsAutofillNotRequired(players, combinations);
 			Collections.sort(combinations, (o1, o2) -> o1.compareEloDifferenceFirst(o2));
 			removeDuplicates(combinations);
 
@@ -27,21 +27,42 @@ public class Matchmaker {
 			long duration = endTime - startTime;
 			System.out.println("Execution took " + duration / 1000000 + "ms");
 
-			printInfoNoAutofill(combinations);
+			System.out.println("Everyone on main role. \n");
+			printMatchupsAutofillNotRequired(combinations);
 
 		} else {
 
+			// figure out which role has too few people queuing for it
+			List<Player> topPlayers = new ArrayList<Player>();
+			List<Player> junglePlayers = new ArrayList<Player>();
+			List<Player> midPlayers = new ArrayList<Player>();
+			List<Player> botPlayers = new ArrayList<Player>();
+			List<Player> supportPlayers = new ArrayList<Player>();
+
+			setAvailablePlayersForEachRole(players, topPlayers, junglePlayers, midPlayers, botPlayers, supportPlayers);
+
+			System.out.println("available top players: " + topPlayers.size());
+			System.out.println("available jungle players: " + junglePlayers.size());
+			System.out.println("available mid players: " + midPlayers.size());
+			System.out.println("available bot players: " + botPlayers.size());
+			System.out.println("available support players: " + supportPlayers.size());
+
+			
 			List<Matchup> combinations = new ArrayList<Matchup>();
 
-			findAllMatchupsAutofill(players, combinations);
+			findAllMatchupsAutofillRequired(players, combinations);
 			Collections.sort(combinations, (o1, o2) -> o1.compareTo(o2));
 			removeDuplicates(combinations);
 
 			long endTime = System.nanoTime();
 			long duration = endTime - startTime;
-			System.out.println("Execution took " + duration / 1000000 + "ms");
+			System.out.println("Execution took " + duration / 1000000 + "ms\n");
 
-			printInfoAutofill(combinations);
+			System.out.println(
+					"Can't put everyone on main role, at least one person has to be on [off role]. \nPossible matchups (exluding games with identical teams and blue/red side swapped): "
+							+ combinations.size() + "\n");
+			// if too many people choose "fill" as main role, console won't be able to display all matchups
+			// printInfoAutofillRequired(combinations);
 		}
 	}
 
@@ -91,7 +112,7 @@ public class Matchmaker {
 
 	// finds all possible matchups with every player getting their main role (used
 	// when there are exactly 2 people who main top, jg, mid, bot, supp)
-	static void findAllMatchupsNoAutofill(Player[] players, List<Matchup> combinations) {
+	static void findAllMatchupsAutofillNotRequired(Player[] players, List<Matchup> combinations) {
 
 		List<Player> topPlayers = new ArrayList<Player>();
 		List<Player> junglePlayers = new ArrayList<Player>();
@@ -191,8 +212,7 @@ public class Matchmaker {
 		}
 	}
 
-	static void printInfoNoAutofill(List<Matchup> combinations) {
-		System.out.println("Everyone on main role. \n");
+	static void printMatchupsAutofillNotRequired(List<Matchup> combinations) {
 		for (int i = 0; i < combinations.size(); i++) {
 			System.out.println("Matchup " + i + " - LP Difference: " + combinations.get(i).eloDifference + " Teams: "
 					+ combinations.get(i).teamsToString());
@@ -211,7 +231,7 @@ public class Matchmaker {
 	 * player for every role
 	 */
 
-	static void findAllMatchupsAutofill(Player[] players, List<Matchup> combinations) {
+	static void findAllMatchupsAutofillRequired(Player[] players, List<Matchup> combinations) {
 
 		for (int i = 0; i < 10; i++) {
 			if (!(("top".equals(players[i].mainRole)
@@ -352,10 +372,7 @@ public class Matchmaker {
 		}
 	}
 
-	static void printInfoAutofill(List<Matchup> combinations) {
-		System.out.println(
-				"Can't put everyone on main role, at least one person has to be on [off role]. \nPossible matchups (exluding games with identical teams and blue/red side swapped): "
-						+ combinations.size() + "\n");
+	static void printMatchupsAutofillRequired(List<Matchup> combinations) {
 
 		for (int i = 0; i < combinations.size(); i++) {
 			System.out.println("MU " + i + " - Offrole: " + combinations.get(i).secondaryRoles + " ("
@@ -365,4 +382,31 @@ public class Matchmaker {
 		}
 	}
 
+	// could be useful to figure out which role is underrepresented
+	static void setAvailablePlayersForEachRole(Player[] players, List<Player> topPlayers, List<Player> junglePlayers,
+			List<Player> midPlayers, List<Player> botPlayers, List<Player> supportPlayers) {
+
+		for (int i = 0; i < 10; i++) {
+			if (players[i].mainRole.equals("top")
+					|| (!players[i].mainRole.equals("fill") && players[i].secondaryRole.equals("top"))
+					|| (players[i].mainRole.equals("fill") && !players[i].secondaryRole.equals("top")))
+				topPlayers.add(players[i]);
+			if (players[i].mainRole.equals("jungle")
+					|| (!players[i].mainRole.equals("fill") && players[i].secondaryRole.equals("jungle"))
+					|| (players[i].mainRole.equals("fill") && !players[i].secondaryRole.equals("jungle")))
+				junglePlayers.add(players[i]);
+			if (players[i].mainRole.equals("mid")
+					|| (!players[i].mainRole.equals("fill") && players[i].secondaryRole.equals("mid"))
+					|| (players[i].mainRole.equals("fill") && !players[i].secondaryRole.equals("mid")))
+				midPlayers.add(players[i]);
+			if (players[i].mainRole.equals("bot")
+					|| (!players[i].mainRole.equals("fill") && players[i].secondaryRole.equals("bot"))
+					|| (players[i].mainRole.equals("fill") && !players[i].secondaryRole.equals("bot")))
+				botPlayers.add(players[i]);
+			if (players[i].mainRole.equals("support")
+					|| (!players[i].mainRole.equals("fill") && players[i].secondaryRole.equals("support"))
+					|| (players[i].mainRole.equals("fill") && !players[i].secondaryRole.equals("support")))
+				supportPlayers.add(players[i]);
+		}
+	}
 }

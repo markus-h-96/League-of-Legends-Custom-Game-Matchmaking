@@ -18,20 +18,11 @@ public class Matchup implements Comparable<Matchup>, Serializable{
 
         return tmp;
 	}
-	// don't actually need this I think?
 	public int compareEloDifferenceFirst(Matchup m) {
 		int tmp = this.absoluteEloDifference - m.absoluteEloDifference;
 		if (tmp == 0) tmp = this.secondaryRoles - m.secondaryRoles;
 		
 		return tmp;
-	}
-	// don't actually need this I think?
-	public int compareOffroleCountFirst(Matchup m) {
-
-	    int tmp = this.secondaryRoles - m.secondaryRoles;
-	    if (tmp == 0) tmp = this.absoluteEloDifference - m.absoluteEloDifference;		
-
-        return tmp;
 	}
   
   
