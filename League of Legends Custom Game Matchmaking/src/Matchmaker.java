@@ -32,7 +32,8 @@ public class Matchmaker {
 
 		} else {
 
-			// figure out which role has too few people queuing for it
+			// figure out which roles have lots or few players available (maybe useful if
+			// roles are so poorly distributed that one role only has one person available)
 			List<Player> topPlayers = new ArrayList<Player>();
 			List<Player> junglePlayers = new ArrayList<Player>();
 			List<Player> midPlayers = new ArrayList<Player>();
@@ -47,7 +48,6 @@ public class Matchmaker {
 			System.out.println("available bot players: " + botPlayers.size());
 			System.out.println("available support players: " + supportPlayers.size());
 
-			
 			List<Matchup> combinations = new ArrayList<Matchup>();
 
 			findAllMatchupsAutofillRequired(players, combinations);
@@ -61,7 +61,8 @@ public class Matchmaker {
 			System.out.println(
 					"Can't put everyone on main role, at least one person has to be on [off role]. \nPossible matchups (exluding games with identical teams and blue/red side swapped): "
 							+ combinations.size() + "\n");
-			// if too many people choose "fill" as main role, console won't be able to display all matchups
+			// if too many people choose "fill" as main role, console won't be able to
+			// display all matchups
 			// printInfoAutofillRequired(combinations);
 		}
 	}
