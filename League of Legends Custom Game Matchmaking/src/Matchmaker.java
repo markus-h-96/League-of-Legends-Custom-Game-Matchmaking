@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Comparator;
 
 public class Matchmaker {
 	public static void main(String args[]) {
@@ -52,6 +53,13 @@ public class Matchmaker {
 
 			findAllMatchupsAutofillRequired(players, combinations);
 			Collections.sort(combinations, (o1, o2) -> o1.compareTo(o2));
+			
+			// using Comparator.comparing and .thencomparing seems to be slower than custom compareTo (~300ms vs 250ms for 720 matchups)
+			/*
+			Collections.sort(combinations, Comparator.comparing(Matchup::getSecondaryRoles)
+					.thenComparing(Matchup::getAbsoluteEloDifference).thenComparing(Matchup::getHighestLaneEloDifference));
+			*/
+			
 			removeDuplicates(combinations);
 
 			long endTime = System.nanoTime();
@@ -61,9 +69,8 @@ public class Matchmaker {
 			System.out.println(
 					"Can't put everyone on main role, at least one person has to be on [off role]. \nPossible matchups (exluding games with identical teams and blue/red side swapped): "
 							+ combinations.size() + "\n");
-			// if too many people choose "fill" as main role, console won't be able to
-			// display all matchups
-			// printInfoAutofillRequired(combinations);
+			// if too many people choose "fill", console can't display all matchups
+			printMatchupsAutofillRequired(combinations);
 		}
 	}
 
@@ -215,7 +222,7 @@ public class Matchmaker {
 
 	static void printMatchupsAutofillNotRequired(List<Matchup> combinations) {
 		for (int i = 0; i < combinations.size(); i++) {
-			System.out.println("Matchup " + i + " - LP Difference: " + combinations.get(i).eloDifference + " Teams: "
+			System.out.println("Matchup " + i + " - LP diff: " + combinations.get(i).eloDifference + " Teams: "
 					+ combinations.get(i).teamsToString());
 		}
 	}
@@ -378,8 +385,8 @@ public class Matchmaker {
 		for (int i = 0; i < combinations.size(); i++) {
 			System.out.println("MU " + i + " - Offrole: " + combinations.get(i).secondaryRoles + " ("
 					+ combinations.get(i).secondaryRolesTeamOne + " blue, " + combinations.get(i).secondaryRolesTeamTwo
-					+ " red)" + " | LP difference: " + combinations.get(i).eloDifference + " | "
-					+ combinations.get(i).teamsToString());
+					+ " red)" + " | LP diff: " + combinations.get(i).eloDifference + " | least fair lane: "
+					+ combinations.get(i).leastBalancedLaneMatchupToString() + combinations.get(i).teamsToString());
 		}
 	}
 
