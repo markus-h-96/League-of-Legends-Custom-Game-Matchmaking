@@ -58,6 +58,7 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 	 * this.highestLaneEloDifference - m.highestLaneEloDifference; } } return tmp; }
 	 */
 
+	
 	@Override
 	public int compareTo(Matchup m) {
 		int tmp = this.secondaryRoles - m.secondaryRoles;
@@ -70,13 +71,32 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
-	public int compareLaneEloDifferenceFirst(Matchup m) {
-		int tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
-
+	// same as compareTo but self-explanatory name
+	// best sorting imo, it's not worth taking 5 extra autofills for a game that's 50 LP closer (and we account for unbalance anyway when assigning LP after a win / loss)
+	public int compareByOffroleTeamLane(Matchup m) {
+		int tmp = this.secondaryRoles - m.secondaryRoles;
+		if (tmp == 0) {
+			tmp = this.absoluteEloDifference - m.absoluteEloDifference;
+			if (Math.abs(tmp) == 0) {
+				tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
+			}
+		}
 		return tmp;
 	}
 
-	public int compareEloDifferenceFirst(Matchup m) {
+	public int compareByLaneOffroleTeam(Matchup m) {
+		int tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
+		if (tmp == 0) {
+			tmp = this.secondaryRoles - m.secondaryRoles;
+			if (tmp == 0) {
+				tmp = this.absoluteEloDifference - m.absoluteEloDifference;
+			}
+		}
+		
+		return tmp;
+	}
+	
+	public int compareByTeamLaneOffrole(Matchup m) {
 		int tmp = this.absoluteEloDifference - m.absoluteEloDifference;
 		if (tmp == 0) {
 			tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;

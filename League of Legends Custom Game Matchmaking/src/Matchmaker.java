@@ -21,7 +21,7 @@ public class Matchmaker {
 			List<Matchup> combinations = new ArrayList<Matchup>();
 
 			findAllMatchupsAutofillNotRequired(players, combinations);
-			Collections.sort(combinations, (o1, o2) -> o1.compareEloDifferenceFirst(o2));
+			Collections.sort(combinations, (o1, o2) -> o1.compareByTeamLaneOffrole(o2));
 			removeDuplicates(combinations);
 
 			long endTime = System.nanoTime();
@@ -52,14 +52,17 @@ public class Matchmaker {
 			List<Matchup> combinations = new ArrayList<Matchup>();
 
 			findAllMatchupsAutofillRequired(players, combinations);
-			Collections.sort(combinations, (o1, o2) -> o1.compareTo(o2));
-			
-			// using Comparator.comparing and .thencomparing seems to be slower than custom compareTo (~300ms vs 250ms for 720 matchups)
+			Collections.sort(combinations, (o1, o2) -> o1.compareByOffroleTeamLane(o2));
+
+			// using Comparator.comparing and .thencomparing seems to be slower than custom
+			// compareTo (~300ms vs 250ms for 720 matchups)
 			/*
-			Collections.sort(combinations, Comparator.comparing(Matchup::getSecondaryRoles)
-					.thenComparing(Matchup::getAbsoluteEloDifference).thenComparing(Matchup::getHighestLaneEloDifference));
-			*/
-			
+			 * Collections.sort(combinations,
+			 * Comparator.comparing(Matchup::getSecondaryRoles)
+			 * .thenComparing(Matchup::getAbsoluteEloDifference).thenComparing(Matchup::
+			 * getHighestLaneEloDifference));
+			 */
+
 			removeDuplicates(combinations);
 
 			long endTime = System.nanoTime();
@@ -222,7 +225,8 @@ public class Matchmaker {
 
 	static void printMatchupsAutofillNotRequired(List<Matchup> combinations) {
 		for (int i = 0; i < combinations.size(); i++) {
-			System.out.println("Matchup " + i + " - LP diff: " + combinations.get(i).eloDifference + " Teams: "
+			System.out.println("Matchup " + i + " - LP diff: " + combinations.get(i).eloDifference
+					+ " | least fair lane: " + combinations.get(i).leastBalancedLaneMatchupToString() + " Teams: "
 					+ combinations.get(i).teamsToString());
 		}
 	}
