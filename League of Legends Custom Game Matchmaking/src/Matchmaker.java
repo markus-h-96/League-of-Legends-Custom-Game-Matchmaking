@@ -3,18 +3,50 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Comparator;
 
 public class Matchmaker {
+	
+	public static Player createTestUser(String main, String secondary, String name, int elo) {
+		Player tmp = new Player(name, main.toLowerCase(), secondary.toLowerCase(), "iron", "4", "0", "200");
+		tmp.elo = elo;
+		return tmp;
+	}
+	
+	
 	public static void main(String args[]) {
 
 		long startTime = System.nanoTime();
-
+ 
+		
+		/*
 		List<Player> listOfPlayers = readActivePlayers("src/players.csv");
 		Player[] players = listOfPlayers.toArray(new Player[0]);
+		*/
+		
 
+		
+		// setting up test players in a way so I can copy paste different test players from kharann and we can compare easily
+		
+		Player[] players = new Player[] {
+			  createTestUser("TOP", "MID", "huzzle", 2100),
+			  createTestUser("JUNGLE", "TOP", "zero", 1400),
+			  createTestUser("MID", "JUNGLE", "rayann", 1821),
+			  createTestUser("MID", "JUNGLE", "mika", 2400),
+			  createTestUser("MID", "JUNGLE", "mo", 2400),
+			  createTestUser("MID", "JUNGLE", "zironic", 659),
+			  createTestUser("BOT", "SUPPORT", "z", 1900),
+			  createTestUser("BOT", "SUPPORT", "tikka", 1800),
+			  createTestUser("SUPPORT", "BOT", "yyaen", 1657),
+			  createTestUser("SUPPORT", "BOT", "kharann", 1700)
+		};
+		
+
+		
+		
 		if (checkIfTwoPlayersPerRole(players)) {
 			// only have to try 2^5 = 32 combinations
 
@@ -50,12 +82,12 @@ public class Matchmaker {
 			System.out.println("available support players: " + supportPlayers.size());
 
 			List<Matchup> combinations = new ArrayList<Matchup>();
-
+			
 			findAllMatchupsAutofillRequired(players, combinations);
 			Collections.sort(combinations, (o1, o2) -> o1.compareByOffroleTeamLane(o2));
 
-			// using Comparator.comparing and .thencomparing seems to be slower than custom
-			// compareTo (~300ms vs 250ms for 720 matchups)
+			// using Comparator.comparing() and .thencomparing() seems to be slower than custom
+			// .compareTo() (~300ms vs 250ms for 720 matchups)
 			/*
 			 * Collections.sort(combinations,
 			 * Comparator.comparing(Matchup::getSecondaryRoles)

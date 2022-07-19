@@ -1,5 +1,5 @@
 import java.io.*;
-public class Player implements Serializable{
+public class Player implements Serializable, Comparable<Player>{
 
 	String name;
 	String mainRole;
@@ -11,6 +11,11 @@ public class Player implements Serializable{
 	int elo;
 	String assignedRole;
 	
+	
+	@Override
+	public int compareTo(Player p) {
+		return this.elo - p.elo;
+	}
 
 	Player(String name, String mainRole, String secondaryRole, String rank, String division, String lp, String offrolePenalty) {
 		this.name = name;

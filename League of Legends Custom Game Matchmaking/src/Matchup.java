@@ -71,8 +71,9 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
+	
 	// same as compareTo but self-explanatory name
-	// best sorting imo, it's not worth taking 5 extra autofills for a game that's 50 LP closer (and we account for unbalance anyway when assigning LP after a win / loss)
+	// often the best sorting imo, it's not worth taking 5 extra autofills for a game that's 50 LP closer (and we account for unbalance anyway when assigning LP after a win / loss)
 	public int compareByOffroleTeamLane(Matchup m) {
 		int tmp = this.secondaryRoles - m.secondaryRoles;
 		if (tmp == 0) {
@@ -84,6 +85,20 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
+	// sometimes, games may become too unbalanced if I try to minimize the amount of offrole players at all cost, so this can be better in some cases
+	public int compareByTeamOffroleLane(Matchup m) {
+		int tmp = this.absoluteEloDifference - m.absoluteEloDifference;
+		if (tmp == 0) {
+			tmp = this.secondaryRoles - m.secondaryRoles;
+			if (tmp == 0) {
+				tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
+			}
+		}
+		
+		return tmp;
+	}
+	
+	
 	public int compareByLaneOffroleTeam(Matchup m) {
 		int tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
 		if (tmp == 0) {
