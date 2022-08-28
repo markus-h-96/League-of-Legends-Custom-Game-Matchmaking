@@ -32,16 +32,16 @@ public class Matchmaker {
 		// setting up test players in a way so I can copy paste different test players from kharann and we can compare easily
 		
 		Player[] players = new Player[] {
-			  createTestUser("TOP", "MID", "huzzle", 2100),
-			  createTestUser("JUNGLE", "TOP", "zero", 1400),
-			  createTestUser("MID", "JUNGLE", "rayann", 1821),
-			  createTestUser("MID", "JUNGLE", "mika", 2400),
-			  createTestUser("MID", "JUNGLE", "mo", 2400),
-			  createTestUser("MID", "JUNGLE", "zironic", 659),
-			  createTestUser("BOT", "SUPPORT", "z", 1900),
-			  createTestUser("BOT", "SUPPORT", "tikka", 1800),
-			  createTestUser("SUPPORT", "BOT", "yyaen", 1657),
-			  createTestUser("SUPPORT", "BOT", "kharann", 1700)
+			  createTestUser("TOP", "MID", "huz", 2517),
+			  createTestUser("mid", "jungle", "kazzara", 1683),
+			  createTestUser("jungle", "support", "luvbirb", 2921),
+			  createTestUser("jungle", "top", "dutchyy", 1570),
+			  createTestUser("top", "mid", "benboy", 2359),
+			  createTestUser("MID", "bot", "zoom", 2402),
+			  createTestUser("top", "jungle", "darkleynad", 1299),
+			  createTestUser("BOT", "support", "ksad", 2914),
+			  createTestUser("SUPPORT", "BOT", "tikka", 2266),
+			  createTestUser("mid", "bot", "you got tr", 2496)
 		};
 		
 
@@ -84,7 +84,7 @@ public class Matchmaker {
 			List<Matchup> combinations = new ArrayList<Matchup>();
 			
 			findAllMatchupsAutofillRequired(players, combinations);
-			Collections.sort(combinations, (o1, o2) -> o1.compareByOffroleTeamLane(o2));
+			Collections.sort(combinations, (o1, o2) -> o1.compareByScore(o2));
 
 			// using Comparator.comparing() and .thencomparing() seems to be slower than custom
 			// .compareTo() (~300ms vs 250ms for 720 matchups)
@@ -402,7 +402,7 @@ public class Matchmaker {
 												}
 
 												Matchup matchup = new Matchup(playersInMatch);
-												matchup.countSecondaryRoles();
+												//matchup.countSecondaryRoles();
 												combinations.add(matchup);
 											}
 										}
@@ -419,7 +419,7 @@ public class Matchmaker {
 	static void printMatchupsAutofillRequired(List<Matchup> combinations) {
 
 		for (int i = 0; i < combinations.size(); i++) {
-			System.out.println("MU " + i + " - Offrole: " + combinations.get(i).secondaryRoles + " ("
+			System.out.println("MU " + i + " Score: " + combinations.get(i).score + " | Offrole: " + combinations.get(i).secondaryRoles + " ("
 					+ combinations.get(i).secondaryRolesTeamOne + " blue, " + combinations.get(i).secondaryRolesTeamTwo
 					+ " red)" + " | LP diff: " + combinations.get(i).eloDifference + " | least fair lane: "
 					+ combinations.get(i).leastBalancedLaneMatchupToString() + combinations.get(i).teamsToString());

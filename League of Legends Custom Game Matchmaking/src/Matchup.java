@@ -17,7 +17,9 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 	int highestLaneEloDifference = 0;
 	// list because multiple roles could be equally fair / unfair
 	List<Integer> leastBalancedLaneMatchup = new ArrayList<Integer>();
-
+	// score to evaluate how "fair" or how "high quality" a matchup is; very subjective, using 1 offrole = 190 team LP diff = 475 least-balanced-lane-LP diff for now
+	int score;
+	
 	// apparently a method is needed to use Comparator.comparing
 	public int getSecondaryRoles() {
 		return this.secondaryRoles;
@@ -32,7 +34,7 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 	public int getHighestLaneEloDifference() {
 		return this.highestLaneEloDifference;
 	}
-
+	
 	/*
 	 * checking lane elo diff if team elo diff <200 probably doesn't work, sorting
 	 * would be inconsistent, e.g. in this case:
@@ -84,6 +86,17 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		}
 		return tmp;
 	}
+	
+	public int compareByOffroleLaneTeam(Matchup m) {
+		int tmp = this.secondaryRoles - m.secondaryRoles;
+		if (tmp == 0) {
+			tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
+			if (Math.abs(tmp) == 0) {
+				tmp = this.absoluteEloDifference - m.absoluteEloDifference;
+			}
+		}
+		return tmp;
+	}
 
 	// sometimes, games may become too unbalanced if I try to minimize the amount of offrole players at all cost, so this can be better in some cases
 	public int compareByTeamOffroleLane(Matchup m) {
@@ -123,6 +136,11 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
+	public int compareByScore(Matchup m) {
+		// lower score means better matchup
+		return this.score - m.score;
+	}
+	
 	Matchup(Player[] players) {
 		this.players = players;
 
@@ -147,6 +165,8 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 				leastBalancedLaneMatchup.add(i);
 			}
 		}
+		countSecondaryRoles();
+		this.score = (int) (200 * this.secondaryRoles + this.absoluteEloDifference + 0.5 * this.highestLaneEloDifference);
 	}
 
 	void countSecondaryRoles() {
