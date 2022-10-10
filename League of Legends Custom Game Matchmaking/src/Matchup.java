@@ -39,7 +39,7 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 	}
 
 	/*
-	 * same as compareTo but self-explanatory name priority: offrole count > team
+	 * same as compareTo but self-explanatory name. priority: offrole count > team
 	 * elo diff > lane elo diff
 	 */
 	public int compareByOffroleTeamLane(Matchup m) {
