@@ -9,51 +9,54 @@ import java.util.List;
 import java.util.Comparator;
 
 public class Matchmaker {
-	
+
+	/*
+	 * created this to help kharann debug his implementation (quickly copy-pasting
+	 * test setup and comparing his results to these)
+	 */
 	public static Player createTestUser(String main, String secondary, String name, int elo) {
 		Player tmp = new Player(name, main.toLowerCase(), secondary.toLowerCase(), "iron", "4", "0", "200");
 		tmp.elo = elo;
 		return tmp;
 	}
-	
-	
+
 	public static void main(String args[]) {
 
-		long startTime = System.nanoTime();
- 
-		
 		/*
-		List<Player> listOfPlayers = readActivePlayers("src/players.csv");
-		Player[] players = listOfPlayers.toArray(new Player[0]);
-		*/
-		
+		 * If set to false, matchmaking will try to minimize three different metrics in
+		 * the following order of priority: players on offrole > elo difference between
+		 * teams > elo difference in the least balanced lane. If set to true,
+		 * matchmaking will take all above metrics into account at the same time to find
+		 * the most fair matchup this will sometimes lead to more players being put on
+		 * their offroles
+		 */
+		boolean sortByScore = true;
 
-		
-		// setting up test players in a way so I can copy paste different test players from kharann and we can compare easily
-		
-		Player[] players = new Player[] {
-			  createTestUser("TOP", "MID", "huz", 2517),
-			  createTestUser("mid", "jungle", "kazzara", 1683),
-			  createTestUser("jungle", "support", "luvbirb", 2921),
-			  createTestUser("jungle", "top", "dutchyy", 1570),
-			  createTestUser("top", "mid", "benboy", 2359),
-			  createTestUser("MID", "bot", "zoom", 2402),
-			  createTestUser("top", "jungle", "darkleynad", 1299),
-			  createTestUser("BOT", "support", "ksad", 2914),
-			  createTestUser("SUPPORT", "BOT", "tikka", 2266),
-			  createTestUser("mid", "bot", "you got tr", 2496)
-		};
-		
+		// timing how long matchmaking takes
+		long startTime = System.nanoTime();
 
-		
-		
-		if (checkIfTwoPlayersPerRole(players)) {
+//		List<Player> listOfPlayers = readActivePlayers("src/players.csv");
+//		Player[] players = listOfPlayers.toArray(new Player[0]);
+
+		Player[] players = new Player[] { 
+				createTestUser("TOP", "support", "huz", 2517),
+				createTestUser("mid", "jungle", "kazzara", 1483), 
+				createTestUser("jungle", "support", "luvbirb", 2611),
+				createTestUser("support", "top", "dutchyy", 3270), 
+				createTestUser("top", "bot", "benboy", 1459),
+				createTestUser("MID", "jungle", "zoom", 2582), 
+				createTestUser("jungle", "mid", "darkleynad", 1399),
+				createTestUser("BOT", "mid", "ksad", 1764), 
+				createTestUser("support", "mid", "tikka", 1266),
+				createTestUser("bot", "support", "you got tr", 996) };
+
+		if (!sortByScore && checkIfTwoPlayersPerRole(players)) {
 			// only have to try 2^5 = 32 combinations
 
 			List<Matchup> combinations = new ArrayList<Matchup>();
 
-			findAllMatchupsAutofillNotRequired(players, combinations);
-			Collections.sort(combinations, (o1, o2) -> o1.compareByTeamLaneOffrole(o2));
+			findAllMatchupsOffroleNotRequired(players, combinations);
+			Collections.sort(combinations, (o1, o2) -> o1.compareByScore(o2));
 			removeDuplicates(combinations);
 
 			long endTime = System.nanoTime();
@@ -61,40 +64,36 @@ public class Matchmaker {
 			System.out.println("Execution took " + duration / 1000000 + "ms");
 
 			System.out.println("Everyone on main role. \n");
-			printMatchupsAutofillNotRequired(combinations);
+			printMatchupsOffroleNotRequired(combinations);
 
 		} else {
+			// check all combinations (worst case 4^5 = 1024, if 2 roles per player)
 
-			// figure out which roles have lots or few players available (maybe useful if
+			// figure out which roles have lots or few players available (could be useful if
 			// roles are so poorly distributed that one role only has one person available)
-			List<Player> topPlayers = new ArrayList<Player>();
-			List<Player> junglePlayers = new ArrayList<Player>();
-			List<Player> midPlayers = new ArrayList<Player>();
-			List<Player> botPlayers = new ArrayList<Player>();
-			List<Player> supportPlayers = new ArrayList<Player>();
 
-			setAvailablePlayersForEachRole(players, topPlayers, junglePlayers, midPlayers, botPlayers, supportPlayers);
-
-			System.out.println("available top players: " + topPlayers.size());
-			System.out.println("available jungle players: " + junglePlayers.size());
-			System.out.println("available mid players: " + midPlayers.size());
-			System.out.println("available bot players: " + botPlayers.size());
-			System.out.println("available support players: " + supportPlayers.size());
+//			List<Player> topPlayers = new ArrayList<Player>();
+//			List<Player> junglePlayers = new ArrayList<Player>();
+//			List<Player> midPlayers = new ArrayList<Player>();
+//			List<Player> botPlayers = new ArrayList<Player>();
+//			List<Player> supportPlayers = new ArrayList<Player>();
+//
+//			setAvailablePlayersForEachRole(players, topPlayers, junglePlayers, midPlayers, botPlayers, supportPlayers);
+//
+//			System.out.println("available top players: " + topPlayers.size());
+//			System.out.println("available jungle players: " + junglePlayers.size());
+//			System.out.println("available mid players: " + midPlayers.size());
+//			System.out.println("available bot players: " + botPlayers.size());
+//			System.out.println("available support players: " + supportPlayers.size());
 
 			List<Matchup> combinations = new ArrayList<Matchup>();
-			
-			findAllMatchupsAutofillRequired(players, combinations);
-			Collections.sort(combinations, (o1, o2) -> o1.compareByScore(o2));
 
-			// using Comparator.comparing() and .thencomparing() seems to be slower than custom
-			// .compareTo() (~300ms vs 250ms for 720 matchups)
-			/*
-			 * Collections.sort(combinations,
-			 * Comparator.comparing(Matchup::getSecondaryRoles)
-			 * .thenComparing(Matchup::getAbsoluteEloDifference).thenComparing(Matchup::
-			 * getHighestLaneEloDifference));
-			 */
-
+			findAllMatchupsOffroleRequired(players, combinations);
+			if (sortByScore) {
+				Collections.sort(combinations, (o1, o2) -> o1.compareByScore(o2));
+			} else {
+				Collections.sort(combinations, (o1, o2) -> o1.compareByOffroleTeamLane(o2));
+			}
 			removeDuplicates(combinations);
 
 			long endTime = System.nanoTime();
@@ -104,8 +103,7 @@ public class Matchmaker {
 			System.out.println(
 					"Can't put everyone on main role, at least one person has to be on [off role]. \nPossible matchups (exluding games with identical teams and blue/red side swapped): "
 							+ combinations.size() + "\n");
-			// if too many people choose "fill", console can't display all matchups
-			printMatchupsAutofillRequired(combinations);
+			printMatchupsOffroleRequired(combinations);
 		}
 	}
 
@@ -153,9 +151,10 @@ public class Matchmaker {
 		return result;
 	}
 
-	// finds all possible matchups with every player getting their main role (used
-	// when there are exactly 2 people who main top, jg, mid, bot, supp)
-	static void findAllMatchupsAutofillNotRequired(Player[] players, List<Matchup> combinations) {
+	/*
+	 * finds all possible matchups with every player getting their main role
+	 */
+	static void findAllMatchupsOffroleNotRequired(Player[] players, List<Matchup> combinations) {
 
 		List<Player> topPlayers = new ArrayList<Player>();
 		List<Player> junglePlayers = new ArrayList<Player>();
@@ -208,16 +207,16 @@ public class Matchmaker {
 		}
 	}
 
-	// want to remove duplicate games that consist of identical teams with blue/red
-	// sides swapped
-	// can't just remove every 2nd game because those identical matchups are not
-	// necessarily next to each other (if two players on the same team swap roles
-	// and the overall elo difference is the same in both cases)
-	// ->
-	// remove games with negative elo difference first
-	// then deal with the ones that are perfectly balanced (elo difference 0) by
-	// specifically looking for matchups with identical teams and red/blue sides
-	// swapped, and remove one of those
+	/*
+	 * want to remove duplicate games that consist of identical teams with blue/red
+	 * sides swapped can't just remove every 2nd game because those identical
+	 * matchups are not necessarily next to each other (if two players on the same
+	 * team swap roles and the overall elo difference is the same in both cases) ->
+	 * remove games with negative elo difference first then deal with the ones that
+	 * are perfectly balanced (elo difference 0) by specifically looking for
+	 * matchups with identical teams and red/blue sides swapped, and remove one of
+	 * those
+	 */
 	static void removeDuplicates(List<Matchup> combinations) {
 
 		int totalCombinations = combinations.size();
@@ -255,27 +254,21 @@ public class Matchmaker {
 		}
 	}
 
-	static void printMatchupsAutofillNotRequired(List<Matchup> combinations) {
+	static void printMatchupsOffroleNotRequired(List<Matchup> combinations) {
 		for (int i = 0; i < combinations.size(); i++) {
-			System.out.println("Matchup " + i + " - LP diff: " + combinations.get(i).eloDifference
-					+ " | least fair lane: " + combinations.get(i).leastBalancedLaneMatchupToString() + " Teams: "
+			System.out.println("Matchup " + i + " - Score: " + combinations.get(i).score + " | LP diff: "
+					+ combinations.get(i).eloDifference + " | least fair lane: "
+					+ combinations.get(i).leastBalancedLaneMatchupToString() + " Teams: "
 					+ combinations.get(i).teamsToString());
 		}
 	}
 
 	/*
-	 * finds all possible matchups with each player being assigned either their main
-	 * role or secondary role (or anything BUT secondary, if main role == fill) used
-	 * when there aren't exactly 2 players who main top, jg, mid, bot, supp, which
-	 * means that someone has to be on offrole and we have to check all possible
-	 * combinations
-	 * 
-	 * could probably make this a) look nicer and b) more efficient if I used
-	 * separate lists for top/jg/mid/bot/supp players, rather than checking every
-	 * player for every role
+	 * Finds all possible matchups with each player being assigned either their main
+	 * role or secondary role (or anything BUT secondary, if main role == fill).
 	 */
 
-	static void findAllMatchupsAutofillRequired(Player[] players, List<Matchup> combinations) {
+	static void findAllMatchupsOffroleRequired(Player[] players, List<Matchup> combinations) {
 
 		for (int i = 0; i < 10; i++) {
 			if (!(("top".equals(players[i].mainRole)
@@ -402,7 +395,7 @@ public class Matchmaker {
 												}
 
 												Matchup matchup = new Matchup(playersInMatch);
-												//matchup.countSecondaryRoles();
+												// matchup.countSecondaryRoles();
 												combinations.add(matchup);
 											}
 										}
@@ -416,12 +409,13 @@ public class Matchmaker {
 		}
 	}
 
-	static void printMatchupsAutofillRequired(List<Matchup> combinations) {
+	static void printMatchupsOffroleRequired(List<Matchup> combinations) {
 
 		for (int i = 0; i < combinations.size(); i++) {
-			System.out.println("MU " + i + " Score: " + combinations.get(i).score + " | Offrole: " + combinations.get(i).secondaryRoles + " ("
-					+ combinations.get(i).secondaryRolesTeamOne + " blue, " + combinations.get(i).secondaryRolesTeamTwo
-					+ " red)" + " | LP diff: " + combinations.get(i).eloDifference + " | least fair lane: "
+			System.out.println("MU " + i + " - Score: " + combinations.get(i).score + " | Offrole: "
+					+ combinations.get(i).secondaryRoles + " (" + combinations.get(i).secondaryRolesTeamOne + " blue, "
+					+ combinations.get(i).secondaryRolesTeamTwo + " red)" + " | LP diff: "
+					+ combinations.get(i).eloDifference + " | least fair lane: "
 					+ combinations.get(i).leastBalancedLaneMatchupToString() + combinations.get(i).teamsToString());
 		}
 	}

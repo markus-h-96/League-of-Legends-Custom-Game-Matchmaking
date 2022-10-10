@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 public class Matchup implements Comparable<Matchup>, Serializable {
 
+	
+	// TODO - could create a "Team" class, but haven't felt like refactoring yet
 	Player[] players;
 	int eloTeamOne = 0;
 	int eloTeamTwo = 0;
@@ -17,50 +19,13 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 	int highestLaneEloDifference = 0;
 	// list because multiple roles could be equally fair / unfair
 	List<Integer> leastBalancedLaneMatchup = new ArrayList<Integer>();
-	// score to evaluate how "fair" or how "high quality" a matchup is; very subjective, using 1 offrole = 190 team LP diff = 475 least-balanced-lane-LP diff for now
-	int score;
-	
-	// apparently a method is needed to use Comparator.comparing
-	public int getSecondaryRoles() {
-		return this.secondaryRoles;
-	}
-
-	// apparently a method is needed to use Comparator.comparing
-	public int getAbsoluteEloDifference() {
-		return this.absoluteEloDifference;
-	}
-
-	// apparently a method is needed to use Comparator.comparing
-	public int getHighestLaneEloDifference() {
-		return this.highestLaneEloDifference;
-	}
-	
 	/*
-	 * checking lane elo diff if team elo diff <200 probably doesn't work, sorting
-	 * would be inconsistent, e.g. in this case:
-	 * 
-	 * A - 200, 500
-	 * 
-	 * B - 450, 400
-	 * 
-	 * C - 300, 450
-	 * 
-	 * B would come before C (team LP diff only 150LP, and B's worst lane diff (400)
-	 * is lower than C (450)
-	 * 
-	 * C would come before A (team LP diff only 100LP, C's worst lane (450) lower
-	 * than A (500)
-	 * 
-	 * A would come before B (team LP diff is 450-200 > 200, so we wouldn't look
-	 * 
-	 * 
-	 * @Override public int compareTo(Matchup m) { int tmp = this.secondaryRoles -
-	 * m.secondaryRoles; if (tmp == 0) { tmp = this.absoluteEloDifference -
-	 * m.absoluteEloDifference; if (Math.abs(tmp) < 200) { tmp =
-	 * this.highestLaneEloDifference - m.highestLaneEloDifference; } } return tmp; }
+	 * score to evaluate how "fair" or how "high quality" a matchup is. Lower score
+	 * means more fair matchup. Very subjective, using 1 offrole = 200 team LP diff
+	 * = 250 least-balanced-lane-LP diff for now
 	 */
+	int score;
 
-	
 	@Override
 	public int compareTo(Matchup m) {
 		int tmp = this.secondaryRoles - m.secondaryRoles;
@@ -73,9 +38,10 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
-	
-	// same as compareTo but self-explanatory name
-	// often the best sorting imo, it's not worth taking 5 extra autofills for a game that's 50 LP closer (and we account for unbalance anyway when assigning LP after a win / loss)
+	/*
+	 * same as compareTo but self-explanatory name priority: offrole count > team
+	 * elo diff > lane elo diff
+	 */
 	public int compareByOffroleTeamLane(Matchup m) {
 		int tmp = this.secondaryRoles - m.secondaryRoles;
 		if (tmp == 0) {
@@ -86,7 +52,10 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		}
 		return tmp;
 	}
-	
+
+	/*
+	 * priority: offrole count > lane elo diff > team elo diff
+	 */
 	public int compareByOffroleLaneTeam(Matchup m) {
 		int tmp = this.secondaryRoles - m.secondaryRoles;
 		if (tmp == 0) {
@@ -98,7 +67,9 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
-	// sometimes, games may become too unbalanced if I try to minimize the amount of offrole players at all cost, so this can be better in some cases
+	/*
+	 * priority: team elo diff > offrole count > lane elo diff
+	 */
 	public int compareByTeamOffroleLane(Matchup m) {
 		int tmp = this.absoluteEloDifference - m.absoluteEloDifference;
 		if (tmp == 0) {
@@ -107,11 +78,12 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 				tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
 			}
 		}
-		
 		return tmp;
 	}
-	
-	
+
+	/*
+	 * priority: lane elo diff > offrole count > team elo diff
+	 */
 	public int compareByLaneOffroleTeam(Matchup m) {
 		int tmp = this.highestLaneEloDifference - m.highestLaneEloDifference;
 		if (tmp == 0) {
@@ -120,10 +92,12 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 				tmp = this.absoluteEloDifference - m.absoluteEloDifference;
 			}
 		}
-		
 		return tmp;
 	}
-	
+
+	/*
+	 * priority: team elo diff > lane elo diff > offrole count
+	 */
 	public int compareByTeamLaneOffrole(Matchup m) {
 		int tmp = this.absoluteEloDifference - m.absoluteEloDifference;
 		if (tmp == 0) {
@@ -136,11 +110,16 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 		return tmp;
 	}
 
+	/*
+	 * probably the best way of sorting, as it takes all 3 metrics (offrole count,
+	 * team elo diff, lane elo diff) into account at once. can be tuned easily; for
+	 * now, using 1 offrole = 200 team elo diff = 250 lane elo diff seems to do
+	 * well.
+	 */
 	public int compareByScore(Matchup m) {
-		// lower score means better matchup
 		return this.score - m.score;
 	}
-	
+
 	Matchup(Player[] players) {
 		this.players = players;
 
@@ -166,7 +145,8 @@ public class Matchup implements Comparable<Matchup>, Serializable {
 			}
 		}
 		countSecondaryRoles();
-		this.score = (int) (200 * this.secondaryRoles + this.absoluteEloDifference + 0.5 * this.highestLaneEloDifference);
+		this.score = (int) (200 * this.secondaryRoles + this.absoluteEloDifference
+				+ 0.8 * this.highestLaneEloDifference);
 	}
 
 	void countSecondaryRoles() {
